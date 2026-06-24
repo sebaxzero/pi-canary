@@ -1,0 +1,10 @@
+{
+  "name": "pi-canary",
+  "version": "1.0.0",
+  "description": "Pi extension that silently verifies agent context awareness every turn using hidden canary tokens",
+  "keywords": ["pi-package"],
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./extensions"]
+  }
+}
