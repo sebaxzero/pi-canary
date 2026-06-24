@@ -4,6 +4,14 @@
   "description": "Pi extension: silently verifies agent context awareness every turn using hidden canary tokens. KV-cache friendly.",
   "keywords": ["pi-package", "pi", "pi-coding-agent", "extension", "context-awareness", "canary", "safety", "verification", "local-llm"],
   "license": "MIT",
+  "homepage": "https://github.com/sebaxzero/pi-canary",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebaxzero/pi-canary.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sebaxzero/pi-canary/issues"
+  },
   "pi": {
     "extensions": ["./extensions"],
     "skills": ["./skills"]
