@@ -1,8 +1,8 @@
 {
   "name": "pi-canary",
   "version": "1.0.0",
-  "description": "Pi extension that silently verifies agent context awareness every turn using hidden canary tokens",
-  "keywords": ["pi-package"],
+  "description": "Pi extension: silently verifies agent context awareness every turn using hidden canary tokens. KV-cache friendly.",
+  "keywords": ["pi-package", "pi", "pi-coding-agent", "extension", "context-awareness", "canary", "safety", "verification", "local-llm"],
   "license": "MIT",
   "pi": {
     "extensions": ["./extensions"]
