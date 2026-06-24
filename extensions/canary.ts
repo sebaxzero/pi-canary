@@ -15,6 +15,9 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Loaded from sibling JSON at startup; /set overrides for the current session only
 const cfg = (() => {
@@ -25,8 +28,8 @@ const cfg = (() => {
     FAIL_COMPACT: 0,
   };
   try {
-    const url = new URL("canary.json", import.meta.url);
-    return { ...defaults, ...JSON.parse((globalThis as any).Deno.readTextFileSync(url)) };
+    const extDir = dirname(fileURLToPath(import.meta.url));
+    return { ...defaults, ...JSON.parse(readFileSync(join(extDir, "canary.json"), "utf-8")) };
   } catch {
     return defaults;
   }
