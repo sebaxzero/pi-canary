@@ -25,8 +25,8 @@ const cfg = (() => {
     FAIL_COMPACT: 0,
   };
   try {
-    const path = new URL("canary.json", import.meta.url).pathname;
-    return { ...defaults, ...JSON.parse((globalThis as any).Deno.readTextFileSync(path)) };
+    const url = new URL("canary.json", import.meta.url);
+    return { ...defaults, ...JSON.parse((globalThis as any).Deno.readTextFileSync(url)) };
   } catch {
     return defaults;
   }
