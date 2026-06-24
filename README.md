@@ -10,10 +10,10 @@ Before answering your message, the agent must locate and return N canary tokens 
 pi install git:github.com/sebaxzero/pi-canary.git
 ```
 
-Or try it without installing:
+Or install project-locally (adds to `.pi/settings.json` only):
 
 ```bash
-pi -e git:github.com/sebaxzero/pi-canary.git
+pi install git:github.com/sebaxzero/pi-canary.git -l
 ```
 
 ## How it works
