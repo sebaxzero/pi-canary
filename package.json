@@ -5,6 +5,7 @@
   "keywords": ["pi-package", "pi", "pi-coding-agent", "extension", "context-awareness", "canary", "safety", "verification", "local-llm"],
   "license": "MIT",
   "pi": {
-    "extensions": ["./extensions"]
+    "extensions": ["./extensions"],
+    "skills": ["./skills"]
   }
 }
