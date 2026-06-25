@@ -1,2 +1,5 @@
 .pi
 .claude
+
+# Runtime config (auto-created at ~/.pi/agent/extensions/canary.json)
+canary.json

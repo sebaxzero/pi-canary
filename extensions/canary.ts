@@ -15,23 +15,36 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Config lives next to the extension file: ./extensions/canary.json
+// Auto-created on first load with defaults; travels with the extension.
+const EXT_DIR = dirname(fileURLToPath(import.meta.url));
+const CONFIG_PATH = join(EXT_DIR, "canary.json");
+
+const DEFAULTS = {
+  COUNT: 3,
+  POSITION: "end" as const,
+  VARIANT: "fixed" as const,
+  FAIL_COMPACT: 0,
+};
+
 // Loaded from sibling JSON at startup; /set overrides for the current session only
-const cfg = (() => {
-  const defaults = {
-    COUNT: 3,
-    POSITION: "end" as "start" | "equidistant" | "end",
-    VARIANT: "fixed" as "fixed" | "variant",
-    FAIL_COMPACT: 0,
-  };
+const cfg: typeof DEFAULTS & { COUNT: number; FAIL_COMPACT: number } = (() => {
+  // Ensure config file exists with defaults
+  if (!existsSync(CONFIG_PATH)) {
+    try {
+      writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULTS, null, 2) + "\n", "utf-8");
+    } catch {
+      // If we can't write (e.g. permissions), just use defaults in memory
+    }
+  }
   try {
-    const extDir = dirname(fileURLToPath(import.meta.url));
-    return { ...defaults, ...JSON.parse(readFileSync(join(extDir, "canary.json"), "utf-8")) };
+    return { ...DEFAULTS, ...JSON.parse(readFileSync(CONFIG_PATH, "utf-8")) };
   } catch {
-    return defaults;
+    return { ...DEFAULTS };
   }
 })();
 
@@ -85,6 +98,9 @@ export default function (pi: ExtensionAPI) {
   let currentTokens: string[] | null = null;
   // Reused across turns in fixed mode; null forces regeneration
   let fixedTokens: string[] | null = null;
+  // Saved before Phase 1 replaces the last user message; restored in Phase 2
+  // if the model refused/errored so the Jinja2 template still sees a real user query.
+  let originalUserMessage: string | null = null;
   let consecutiveFailures = 0;
   // Guard against double-injection if context fires twice before message_end (retries)
   let verifyContextSent = false;
@@ -108,6 +124,7 @@ export default function (pi: ExtensionAPI) {
     }
     phase = "verifying";
     verifyContextSent = false;
+    originalUserMessage = null;
   });
 
   pi.on("context", (event, _ctx) => {
@@ -124,6 +141,16 @@ export default function (pi: ExtensionAPI) {
       // question remains in session history and reappears in Phase 2.
       if (messages.length > 0 && (messages[messages.length - 1] as any).role === "user") {
         const lastMsg = messages[messages.length - 1] as any;
+        // Save the original content so Phase 2 can restore it if the model refused/errored
+        originalUserMessage =
+          typeof lastMsg.content === "string"
+            ? lastMsg.content
+            : Array.isArray(lastMsg.content)
+              ? lastMsg.content
+                  .filter((c: any) => c?.type === "text")
+                  .map((c: any) => c.text)
+                  .join("\n")
+              : null;
         if (typeof lastMsg.content === "string") {
           lastMsg.content = "Please return the canary tokens.";
         } else if (Array.isArray(lastMsg.content) && lastMsg.content.length > 0) {
@@ -167,11 +194,28 @@ export default function (pi: ExtensionAPI) {
 
     // --- Phase 2: strip the hidden verification exchange ---
     if (phase === "responding") {
-      const messages = event.messages.filter(
+      let messages = event.messages.filter(
         (m: any) => m.customType !== "canary" &&
                     m.timestamp !== verifyResponseTimestamp
       );
-      if (messages.length !== event.messages.length) return { messages };
+      if (messages.length !== event.messages.length) {
+        // If the model refused/errored in Phase 1, the last user message is still
+        // the canary prompt ("Please return the canary tokens."). Restore the original
+        // so the Jinja2 chat template sees a real user query.
+        if (
+          originalUserMessage &&
+          messages.length > 0 &&
+          (messages[messages.length - 1] as any).role === "user"
+        ) {
+          const lastMsg = messages[messages.length - 1] as any;
+          const canaryPrompt = "Please return the canary tokens.";
+          const lastContent = typeof lastMsg.content === "string" ? lastMsg.content : "";
+          if (lastContent === canaryPrompt) {
+            lastMsg.content = originalUserMessage;
+          }
+        }
+        return { messages };
+      }
     }
   });
 

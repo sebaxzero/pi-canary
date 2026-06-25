@@ -38,7 +38,7 @@ If verification fails, a warning notification appears in the TUI.
 
 ## Configuration
 
-Persistent configuration lives in `extensions/canary.json`. You can ask the agent to edit it directly:
+Persistent configuration lives in `extensions/canary.json` (auto-created on first load with defaults). You can ask the agent to edit it directly:
 
 ```json
 {

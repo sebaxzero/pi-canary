@@ -36,10 +36,9 @@ injected into the conversation history. Passed = proceed; failed = warning.
 
 **Persistent** (survives restarts): edit `canary.json` in the extensions directory.
 
-Global git install path:
-```
-~/.pi/agent/git/github.com/sebaxzero/pi-canary/extensions/canary.json
-```
+The config lives next to the extension file and is auto-created on first load:
+- **Global install**: `~/.pi/agent/extensions/pi-canary/extensions/canary.json`
+- **Local install**: `<project>/.pi/extensions/pi-canary/extensions/canary.json`
 
 Example `canary.json`:
 ```json
