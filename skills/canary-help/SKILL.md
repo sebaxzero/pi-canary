@@ -21,7 +21,7 @@ injected into the conversation history. Passed = proceed; failed = warning.
 
 | Key | Default | Valid values | What it controls |
 |-----|---------|-------------|-----------------|
-| `COUNT` | `3` | integer > 0 | Number of canary tokens per turn |
+| `COUNT` | `3` | integer ≥ 0 | Number of canary tokens per turn (`0` disables the canary check entirely) |
 | `POSITION` | `end` | `start` \| `equidistant` \| `end` | Where tokens are injected in context |
 | `VARIANT` | `fixed` | `fixed` \| `variant` | Fixed reuses same tokens (KV-cache friendly); variant regenerates each turn |
 | `FAIL_COMPACT` | `0` | integer ≥ 0 | Trigger compaction after N consecutive failures (0 = disabled) |

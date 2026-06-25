@@ -51,7 +51,7 @@ Persistent configuration lives in `extensions/canary.json`. You can ask the agen
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `COUNT` | `3` | Number of canary tokens injected per turn |
+| `COUNT` | `3` | Number of canary tokens injected per turn (`0` disables the canary check entirely) |
 | `POSITION` | `end` | Where tokens are injected: `start`, `equidistant`, or `end` |
 | `VARIANT` | `fixed` | `fixed` = same tokens every turn (preserves KV cache); `variant` = new tokens each turn |
 | `FAIL_COMPACT` | `0` | Compact context after N consecutive failures (`0` = disabled) |
