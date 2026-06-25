@@ -92,6 +92,12 @@ export default function (pi: ExtensionAPI) {
   let verifyResponseTimestamp: number | null = null;
 
   pi.on("before_agent_start", (_event, _ctx) => {
+    // COUNT=0 disables the canary check entirely
+    if (cfg.COUNT === 0) {
+      phase = "idle";
+      currentTokens = null;
+      return;
+    }
     if (cfg.VARIANT === "fixed") {
       if (!fixedTokens || fixedTokens.length !== cfg.COUNT) {
         fixedTokens = Array.from({ length: cfg.COUNT }, generateToken);
@@ -273,7 +279,7 @@ export default function (pi: ExtensionAPI) {
           if (eq > 0 && val !== "") {
             if (key === "COUNT") {
               const n = parseInt(val, 10);
-              if (n > 0) { cfg.COUNT = n; fixedTokens = null; results.push(`COUNT=${cfg.COUNT}`); }
+              if (n >= 0) { cfg.COUNT = n; fixedTokens = null; results.push(`COUNT=${cfg.COUNT}`); }
               else results.push(`invalid COUNT: ${val}`);
             } else if (key === "POSITION") {
               if (val === "start" || val === "equidistant" || val === "end") {
