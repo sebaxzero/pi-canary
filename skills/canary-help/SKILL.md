@@ -36,9 +36,18 @@ injected into the conversation history. Passed = proceed; failed = warning.
 
 **Persistent** (survives restarts): edit `canary.json` in the extensions directory.
 
-The config lives next to the extension file and is auto-created on first load:
-- **Global install**: `~/.pi/agent/extensions/pi-canary/extensions/canary.json`
-- **Local install**: `<project>/.pi/extensions/pi-canary/extensions/canary.json`
+The config lives next to the extension file and is auto-created on first load — look in these locations:
+
+1. **NPM install** (check `~/.pi/agent/npm/package.json`):
+   - `~/.pi/agent/npm/node_modules/pi-canary/extensions/canary.json`
+2. **Git install**:
+   - `~/.pi/agent/git/github.com/sebaxzero/pi-canary/extensions/canary.json`
+3. **Extensions directory**:
+   - `~/.pi/agent/extensions/pi-canary/extensions/canary.json`
+4. **Local install** (in the project, same structure as global but relative):
+   - `./.pi/agent/npm/node_modules/pi-canary/extensions/canary.json` (npm)
+   - `./.pi/agent/git/github.com/sebaxzero/pi-canary/extensions/canary.json` (git)
+   - `./.pi/agent/extensions/pi-canary/extensions/canary.json` (direct)
 
 Example `canary.json`:
 ```json
