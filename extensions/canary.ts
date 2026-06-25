@@ -116,10 +116,19 @@ export default function (pi: ExtensionAPI) {
       verifyContextSent = true;
       const messages = [...event.messages];
 
-      // Suppress the original user question so the agent focuses only on the canary check.
-      // The question remains in session history and reappears in Phase 2.
+      // Replace the original user question with a neutral prompt so the agent focuses
+      // only on the canary check. We keep the user role (replacing content, not the
+      // message) because some providers (e.g. llama-server) use Jinja2 chat templates
+      // that require a user message at the end of the conversation — removing it causes
+      // template parsing to fail with "No user query found in messages." The original
+      // question remains in session history and reappears in Phase 2.
       if (messages.length > 0 && (messages[messages.length - 1] as any).role === "user") {
-        messages.pop();
+        const lastMsg = messages[messages.length - 1] as any;
+        if (typeof lastMsg.content === "string") {
+          lastMsg.content = "Please return the canary tokens.";
+        } else if (Array.isArray(lastMsg.content) && lastMsg.content.length > 0) {
+          lastMsg.content = [{ type: "text", text: "Please return the canary tokens." }];
+        }
       }
 
       const histLen = messages.length;
