@@ -73,19 +73,14 @@ function positionLabel(index: number, total: number): string {
 }
 
 function buildAnchorContent(token: string, index: number, total: number): string {
-  return `[CANARY — TOKEN_${index + 1} of ${total} — ${positionLabel(index, total)}]\n${token}`;
+  return `[marker ${index + 1}/${total} — ${positionLabel(index, total)}]\n${token}`;
 }
 
 function buildVerificationInstruction(count: number): string {
-  const formatLines = Array.from({ length: count }, (_, i) => `TOKEN_${i + 1}: <value>`);
+  const formatLines = Array.from({ length: count }, (_, i) => `marker-${i + 1}: <value>`);
   return [
-    "═══════════════════════════════════════════════════════════",
-    "⚠️  CANARY CHECK ⚠️",
-    "═══════════════════════════════════════════════════════════",
-    "",
-    `Return ONLY the ${count} canary token${count === 1 ? "" : "s"} below. Do not say anything else.`,
+    `Recall check — list the ${count} marker${count === 1 ? "" : "s"} from this conversation:`,
     ...formatLines,
-    "═══════════════════════════════════════════════════════════",
   ].join("\n");
 }
 
@@ -152,9 +147,9 @@ export default function (pi: ExtensionAPI) {
                   .join("\n")
               : null;
         if (typeof lastMsg.content === "string") {
-          lastMsg.content = "Please return the canary tokens.";
+          lastMsg.content = "List the session markers from this conversation.";
         } else if (Array.isArray(lastMsg.content) && lastMsg.content.length > 0) {
-          lastMsg.content = [{ type: "text", text: "Please return the canary tokens." }];
+          lastMsg.content = [{ type: "text", text: "List the session markers from this conversation." }];
         }
       }
 
@@ -208,7 +203,7 @@ export default function (pi: ExtensionAPI) {
           (messages[messages.length - 1] as any).role === "user"
         ) {
           const lastMsg = messages[messages.length - 1] as any;
-          const canaryPrompt = "Please return the canary tokens.";
+          const canaryPrompt = "List the session markers from this conversation.";
           const lastContent = typeof lastMsg.content === "string" ? lastMsg.content : "";
           if (lastContent === canaryPrompt) {
             lastMsg.content = originalUserMessage;
