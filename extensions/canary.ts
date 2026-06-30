@@ -109,6 +109,8 @@ export default function (pi: ExtensionAPI) {
       currentTokens = null;
       return;
     }
+    // Phase 1 completed and triggered Phase 2 via sendMessage — don't restart the cycle.
+    if (phase === "responding") return;
     if (cfg.VARIANT === "fixed") {
       if (!fixedTokens || fixedTokens.length !== cfg.COUNT) {
         fixedTokens = Array.from({ length: cfg.COUNT }, generateToken);
@@ -125,8 +127,17 @@ export default function (pi: ExtensionAPI) {
   pi.on("context", (event, _ctx) => {
     // --- Phase 1: build verification-only context ---
     if (phase === "verifying" && currentTokens && !verifyContextSent) {
-      verifyContextSent = true;
       const messages = [...event.messages];
+
+      // If the context doesn't end with a user message, injecting canary tokens would
+      // leave no user message at the tail and trigger a Jinja template parse error
+      // ("No user query found in messages."). Bail out rather than corrupt the call.
+      if (messages.length === 0 || (messages[messages.length - 1] as any).role !== "user") {
+        phase = "idle";
+        return;
+      }
+
+      verifyContextSent = true;
 
       // Replace the original user question with a neutral prompt so the agent focuses
       // only on the canary check. We keep the user role (replacing content, not the
@@ -374,7 +385,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", (_event, ctx) => {
     if (ctx.hasUI) {
-      ctx.ui.notify(`Canary loaded — ${cfg.COUNT} token(s), position=${cfg.POSITION}, variant=${cfg.VARIANT}`, "info");
+      ctx.ui.notify(`${cfg.COUNT} Canary loaded — position=${cfg.POSITION}, variant=${cfg.VARIANT}`, "hint");
     }
   });
 }
