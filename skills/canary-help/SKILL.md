@@ -10,6 +10,21 @@ license: MIT
 pi-canary runs a hidden pre-turn where the agent must recall N secret tokens
 injected into the conversation history. Passed = proceed; failed = warning.
 
+## How it works
+
+Each user turn runs two hidden phases:
+
+1. **Verify** — tokens are injected into the context and the model is asked to
+   list them. The exchange never appears in the TUI or the final answer.
+2. **Respond** — tokens and the verification exchange are stripped; the model
+   answers the original question with a clean context.
+
+A failed check (`⚠️ Canary check failed`) means the model could not recall
+content from its own context — a sign of degradation (overflow, truncation,
+broken chat template). The turn still proceeds; consider compacting, or set
+`FAIL_COMPACT` to automate it. If loop-police aborts the verification turn,
+the check is skipped for that turn.
+
 ## Commands
 
 | Command | What it does |

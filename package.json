@@ -12,6 +12,9 @@
   "bugs": {
     "url": "https://github.com/sebaxzero/pi-canary/issues"
   },
+  "scripts": {
+    "test": "node --test test.mjs"
+  },
   "pi": {
     "extensions": ["./extensions"],
     "skills": ["./skills"]
