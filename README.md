@@ -1,20 +1,27 @@
 # pi-canary
 
+[![test](https://github.com/sebaxzero/pi-canary/actions/workflows/test.yml/badge.svg)](https://github.com/sebaxzero/pi-canary/actions/workflows/test.yml)
+[![npm](https://img.shields.io/npm/v/pi-canary)](https://www.npmjs.com/package/pi-canary)
+
 A [pi](https://pi.dev) extension that silently verifies the agent's context awareness on every turn using hidden canary tokens.
 
 Before answering your message, the agent must locate and return N canary tokens distributed across the conversation history. The entire verification exchange is invisible: no tokens in the thinking block, no tokens in the visible response, nothing in the history the agent uses to answer you.
 
 ## Install
 
+From npm:
+
+```bash
+pi install npm:pi-canary
+```
+
+Or from git:
+
 ```bash
 pi install git:github.com/sebaxzero/pi-canary.git
 ```
 
-Or install project-locally (adds to `.pi/settings.json` only):
-
-```bash
-pi install git:github.com/sebaxzero/pi-canary.git -l
-```
+Add `-l` to either form to install project-locally (adds to `.pi/settings.json` only).
 
 ## How it works
 
@@ -22,7 +29,7 @@ Every time you send a message, the extension runs a hidden two-phase exchange be
 
 **Phase 1 — Verify**
 
-- N random 24-character canary tokens are generated (or reused if `VARIANT=fixed`).
+- N random 32-character canary tokens are generated (or reused if `VARIANT=fixed`).
 - They are injected at the configured positions across the conversation history. The last token also carries a verification instruction.
 - Your original question is temporarily suppressed.
 - The agent is asked only to return the N tokens by name.
@@ -34,7 +41,11 @@ Every time you send a message, the extension runs a hidden two-phase exchange be
 - Your original question is restored.
 - The agent answers normally, with no canary tokens anywhere in its view.
 
-If verification fails, a warning notification appears in the TUI.
+If verification fails, a warning notification appears in the TUI. A failure
+means the model could not recall content from its own context — a sign of
+degradation (context overflow, truncation, or a broken chat template).
+Consider compacting, or set `FAIL_COMPACT` to automate it. The turn still
+proceeds either way.
 
 ## Configuration
 
@@ -73,6 +84,21 @@ Example: `/canary set COUNT=5 POSITION=equidistant VARIANT=variant`
 ## Compatibility
 
 Works alongside [pi-loop-police](https://github.com/sebaxzero/pi-loop-police). When loop-police aborts a turn, the canary check yields gracefully and does not fire its own recovery.
+
+## Tests
+
+```bash
+node --test test.mjs
+```
+
+Dependency-free suite over the pure logic (token generation, injection
+positions, recall check) — no build step. CI runs it on every push and pull
+request.
+
+## Releasing
+
+Bump `version` in `package.json`, commit, tag `vX.Y.Z`, and push the tag —
+the publish workflow runs the tests and publishes to npm.
 
 ## License
 
