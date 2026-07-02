@@ -26,13 +26,13 @@ const CONFIG_PATH = join(EXT_DIR, "canary.json");
 
 const DEFAULTS = {
   COUNT: 3,
-  POSITION: "end" as const,
-  VARIANT: "fixed" as const,
+  POSITION: "end" as "start" | "equidistant" | "end",
+  VARIANT: "fixed" as "fixed" | "variant",
   FAIL_COMPACT: 0,
 };
 
 // Loaded from sibling JSON at startup; /set overrides for the current session only
-const cfg: typeof DEFAULTS & { COUNT: number; FAIL_COMPACT: number } = (() => {
+const cfg: typeof DEFAULTS = (() => {
   // Ensure config file exists with defaults
   if (!existsSync(CONFIG_PATH)) {
     try {
@@ -50,13 +50,8 @@ const cfg: typeof DEFAULTS & { COUNT: number; FAIL_COMPACT: number } = (() => {
 
 // --- Token generation ---
 
-const TOKEN_LENGTH = 24;
-const TOKEN_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
 function generateToken(): string {
-  const arr = new Uint8Array(TOKEN_LENGTH);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, (b) => TOKEN_CHARSET[b % TOKEN_CHARSET.length]).join("");
+  return crypto.randomUUID().replace(/-/g, "");
 }
 
 // --- Message builders ---
@@ -330,34 +325,35 @@ export default function (pi: ExtensionAPI) {
       const trimmed = args?.trim() ?? "";
 
       if (trimmed.startsWith("set ")) {
-        const results: string[] = [];
-        for (const pair of trimmed.slice(4).trim().split(/\s+/)) {
+        // Each setter validates, applies, and returns a status string.
+        const setters: Record<string, (val: string) => string> = {
+          COUNT: (v) => {
+            const n = parseInt(v, 10);
+            if (!(n >= 0)) return `invalid COUNT: ${v}`;
+            cfg.COUNT = n; fixedTokens = null; return `COUNT=${n}`;
+          },
+          POSITION: (v) => {
+            if (v !== "start" && v !== "equidistant" && v !== "end")
+              return `invalid POSITION: ${v} (start|equidistant|end)`;
+            cfg.POSITION = v; return `POSITION=${v}`;
+          },
+          VARIANT: (v) => {
+            if (v !== "fixed" && v !== "variant") return `invalid VARIANT: ${v} (fixed|variant)`;
+            cfg.VARIANT = v; if (v === "variant") fixedTokens = null; return `VARIANT=${v}`;
+          },
+          FAIL_COMPACT: (v) => {
+            const n = parseInt(v, 10);
+            if (!(n >= 0)) return `invalid FAIL_COMPACT: ${v}`;
+            cfg.FAIL_COMPACT = n; return `FAIL_COMPACT=${n}`;
+          },
+        };
+        const results = trimmed.slice(4).trim().split(/\s+/).map((pair) => {
           const eq = pair.indexOf("=");
           const key = pair.slice(0, eq).toUpperCase();
           const val = pair.slice(eq + 1);
-          if (eq > 0 && val !== "") {
-            if (key === "COUNT") {
-              const n = parseInt(val, 10);
-              if (n >= 0) { cfg.COUNT = n; fixedTokens = null; results.push(`COUNT=${cfg.COUNT}`); }
-              else results.push(`invalid COUNT: ${val}`);
-            } else if (key === "POSITION") {
-              if (val === "start" || val === "equidistant" || val === "end") {
-                cfg.POSITION = val; results.push(`POSITION=${cfg.POSITION}`);
-              } else results.push(`invalid POSITION: ${val} (start|equidistant|end)`);
-            } else if (key === "VARIANT") {
-              if (val === "fixed" || val === "variant") {
-                cfg.VARIANT = val; if (val === "variant") fixedTokens = null;
-                results.push(`VARIANT=${cfg.VARIANT}`);
-              } else results.push(`invalid VARIANT: ${val} (fixed|variant)`);
-            } else if (key === "FAIL_COMPACT") {
-              const n = parseInt(val, 10);
-              if (n >= 0) { cfg.FAIL_COMPACT = n; results.push(`FAIL_COMPACT=${cfg.FAIL_COMPACT}`); }
-              else results.push(`invalid FAIL_COMPACT: ${val}`);
-            } else {
-              results.push(`unknown: ${key}`);
-            }
-          }
-        }
+          if (eq <= 0 || val === "") return `unknown: ${pair}`;
+          return setters[key] ? setters[key](val) : `unknown: ${key}`;
+        });
         ctx.ui.notify(`Canary: ${results.join(", ")}`, "info");
         return;
       }
